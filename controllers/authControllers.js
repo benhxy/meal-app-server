@@ -2,7 +2,7 @@ var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
 var verify = require("../middlewares/sendVerification");
-var User = require("../models/user");
+var User = require("../models/userModel");
 var config = require("../config");
 
 
@@ -20,9 +20,9 @@ module.exports = {
     //check if email exists in database
     let query = User.find({});
     query.or([
-      {local.email: req.body.email},
-      {facebook.email: req.body.email},
-      {google.email: req.body.email}
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
     ]);
     query.exec((err, user) => {
       if (user) {
@@ -62,6 +62,11 @@ module.exports = {
 
   //local auth login
   localLogin: function(req, res) {
+
+  },
+
+  //resent verification email
+  resentVerification: function(req, res) {
 
   }
 

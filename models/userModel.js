@@ -31,7 +31,7 @@ var UserSchema = new Schema({
     data: Buffer,
     contentType: String
   },
-  expectedCal: {
+  expectedKcal: {
     type: Number,
     default: 0
   }

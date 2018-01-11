@@ -24,6 +24,15 @@ app.get("/", (req, res) => {
 });
 
 
+//import and use routes
+var publicRoutes = require("./routes/publicRoutes");
+var userRoutes = require("./routes/userRoutes");
+var mealRoutes = require("./routes/mealRoutes");
+app.use("/api/public/", publicRoutes);
+app.use("/api/users/", userRoutes);
+app.use("/api/meals/", mealRoutes);
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
