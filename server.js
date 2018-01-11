@@ -7,28 +7,33 @@ var config = require("./config");
 
 //mongoose and mongodb
 var mongoose = require("mongoose");
+mongoose.Promise = require('bluebird');
 mongoose.connect(config.databaseUrl, {useMongoClient: true});
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 //middlewares
+var path = require('path');
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-//test
+//temp
 app.get("/", (req, res) => {
   res.send("Hello");
 });
 
 
-//import and use routes
+//unprotected public routes
 var publicRoutes = require("./routes/publicRoutes");
+app.use("/api/public/", publicRoutes);
+
+
+//protected routes
 var userRoutes = require("./routes/userRoutes");
 var mealRoutes = require("./routes/mealRoutes");
-app.use("/api/public/", publicRoutes);
 app.use("/api/users/", userRoutes);
 app.use("/api/meals/", mealRoutes);
 
@@ -46,6 +51,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.json({message: "An error occurred", error: err});
 });
+
+module.exports = app;
 
 //start server
 app.set('port', config.port);
@@ -81,5 +88,5 @@ server.on('listening', () =>  {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  //debug('Listening on ' + bind);
 });

@@ -1,9 +1,9 @@
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
-var verify = require("../middlewares/sendVerification");
 var User = require("../models/userModel");
 var config = require("../config");
+var verify = require("../middlewares/sendVerification");
 
 
 module.exports = {
@@ -11,23 +11,26 @@ module.exports = {
   //local auth signup
   localSignup: function(req, res) {
 
-    //check if login credentials are in request
+    console.log("=====localSignup=====");
+
+    //check if signup credentials are in request
+    //let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    //let email = req.body.email;
+    //console.log(email.match(mailformat));
     if (!req.body.name || !req.body.email || !req.body.password || req.body.name == "" || req.body.email == "" || req.body.password == "") {
       res.status(400);
-      return res.json({message: "Missing signup information"});
+      return res.json({message: "Incomplete or incorrect signup information"});
     }
 
     //check if email exists in database
-    let query = User.find({});
-    query.or([
+    User.find({$or: [
       {"local.email": req.body.email},
       {"facebook.email": req.body.email},
       {"google.email": req.body.email}
-    ]);
-    query.exec((err, user) => {
-      if (user) {
+    ]}, function(err, user) {
+      if (user != "") {
         res.status(400);
-        return res.json({message: "This email is already in use"});
+        return res.json({message: "Email already used by other users"});
       } else {
 
         //construct new user object
@@ -39,19 +42,25 @@ module.exports = {
           },
           role: "user"
         };
-        //salt password
-        bcrypt.hash(req.body.password, 10).then((hash) => {
-          newUserInfo.local.password = hash;
-        });
+        console.log(newUserInfo);
+
+        //salt password (sync for now)
+        newUserInfo.local.password = bcrypt.hashSync(req.body.password, 10);
         //save to db
         var newUser = new User(newUserInfo);
-        newUser.save((err, user) => {
+        newUser.save((err, createdUser) => {
           if (err) {
             res.status(500);
             return res.json({message: "Fail to create user in database"});
           } else {
             //set nonce and send verification email
-            verify(user);
+            verify(createdUser);
+            //redirect to resend page
+            res.status(300);
+            return res.json({
+              message: "Redirect to resend verification",
+              redirect: "/auth/resend-verification"
+            });
           }
         });
 
@@ -63,10 +72,64 @@ module.exports = {
   //local auth login
   localLogin: function(req, res) {
 
-  },
+    //check complete information
+    if (!req.body.email || !req.body.password) {
+      res.status(400);
+      return res.json({message: "Missing login information"});
+    }
 
-  //resent verification email
-  resentVerification: function(req, res) {
+    //check email and password
+    User.findOne({"local.email": req.body.email}, function(err, user) {
+      if (err) {
+        res.status(400);
+        return res.json({message: "Local login email does not exist"});
+      }
+
+      //verify password
+      console.log(req.body.password);
+      console.log(user.local.password);
+      let passwordIsCorrect = bcrypt.compareSync(req.body.password, user.local.password);
+      if (!passwordIsCorrect) {
+        res.status(400);
+        return res.json({message: "Wrong password"});
+      }
+
+      //generate token
+      let payload = {
+        "userId": user._id,
+        "role": user.role
+      };
+      let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+
+      //check if user is verified or unlocked, redirect if not
+      if (!user.local.verified) {
+        res.status(300);
+        return res.json({
+          message: "Redirect to resend verification page",
+          redirect: "/auth/resend-verification",
+          token: token
+        });
+      } else if (user.local.loginFailCount >= 3) {
+        res.status(300);
+        return res.json({
+          message: "Redirect to account locked page",
+          redirect: "/auth/account-locked",
+          token: token
+        });
+      } else {
+        //successful login, redirect to meals page
+        let mealsPageLink = "/meals?userId=" + user._id;
+        res.status(300);
+        return res.json({
+          message: "Redirect to meals page",
+          redirect: mealsPageLink,
+          token: token
+        });
+      }
+
+
+
+    });
 
   }
 

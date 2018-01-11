@@ -1,8 +1,9 @@
 {
   "name": "meal-app-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend of meal-tracking web app",
   "main": "server.js",
+  "repository": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,12 +11,14 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^1.0.3",
+    "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
     "jsonwebtoken": "^8.1.0",
     "mongoose": "^4.13.9",
     "morgan": "^1.9.0",
     "nodemailer": "^4.4.1",
-    "nodemon": "^1.14.9"
+    "nodemon": "^1.14.10",
+    "path": "^0.12.7"
   }
 }

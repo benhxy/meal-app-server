@@ -12,20 +12,21 @@ var UserSchema = new Schema({
     loginFailCount: Number,
   },
   facebook         : {
-      id           : String,
-      token        : String,
-      name         : String,
-      email        : String
+    id: String,
+    token: String,
+    email: String,
+    name: String,
   },
   google           : {
-      id           : String,
-      token        : String,
-      email        : String,
-      name         : String
+    id: String,
+    token: String,
+    email: String,
+    name: String,
   },
-  role: { type: String,
-          required: true,
-          enum: ["user", "userManager", "admin"]
+  role: {
+    type: String,
+    required: true,
+    enum: ["user", "userManager", "admin"]
   },
   profilePic: {
     data: Buffer,
