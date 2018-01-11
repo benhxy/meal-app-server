@@ -80,14 +80,12 @@ module.exports = {
 
     //check email and password
     User.findOne({"local.email": req.body.email}, function(err, user) {
-      if (err) {
+      if (err || user == "") {
         res.status(400);
         return res.json({message: "Local login email does not exist"});
       }
 
       //verify password
-      console.log(req.body.password);
-      console.log(user.local.password);
       let passwordIsCorrect = bcrypt.compareSync(req.body.password, user.local.password);
       if (!passwordIsCorrect) {
         res.status(400);
@@ -109,7 +107,7 @@ module.exports = {
           redirect: "/auth/resend-verification",
           token: token
         });
-      } else if (user.local.loginFailCount >= 3) {
+      } else if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
         res.status(300);
         return res.json({
           message: "Redirect to account locked page",
@@ -126,8 +124,6 @@ module.exports = {
           token: token
         });
       }
-
-
 
     });
 
