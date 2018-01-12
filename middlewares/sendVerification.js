@@ -15,12 +15,15 @@ var sendVerification = function(user) {
 
   //generate and save nonce to db
   let nonce = randomstring.generate(20);
-  User.findByIdAndUpdate(userId, {"local.verificationNonce": nonce}, function(err, user) {
+  user.local.verificationNonce= nonce;
+  user.save(function(err, user) {
     if (err || user == "") {
       console.log(err);
       res.status(500);
       return res.json({message: "Database error"});
     }
+
+    console.log(user);
   });
 
   //setup mailer
@@ -43,7 +46,7 @@ var sendVerification = function(user) {
       console.log('Email sent: ' + info.response);
     }
   });
-  
+
 };
 
 module.exports = sendVerification;

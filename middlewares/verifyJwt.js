@@ -32,7 +32,8 @@ var verifyJwt = function (req, res, next) {
   console.log("Verify successful");
 
   //check if user is verified or unlocked, redirect if not
-  User.findById(req.decoded.userId, function(err, user) {
+  let dbQuery = User.findById(req.decoded.userId);
+  let redirect = dbQuery.exec(function(err, user) {
     if (err || user == "") {
       res.status(500);
       return res.json({message: "Database error", error: err});
@@ -51,9 +52,9 @@ var verifyJwt = function (req, res, next) {
         redirect: "/auth/account-locked"
       });
     }
-  });
 
-  next();
+    next();
+  });
 
 };
 

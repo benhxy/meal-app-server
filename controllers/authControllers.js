@@ -138,8 +138,12 @@ module.exports = {
   //activate local account
   activateAccount: function(req, res) {
 
+    console.log("=====activate account=====");
+    //console.log(req.query);
+
     //check query completeness
-    if (!req.qeury.userId || !req.query.nonce) {
+    if (!req.query.userId || !req.query.nonce) {
+      console.log("query incomplete");
       res.status(400);
       return res.json({message: "Invalid activation link"});
     }
@@ -150,6 +154,7 @@ module.exports = {
         res.status(400);
         return res.json({message: "Invalid activation link"});
       } else {
+        //console.log(user);
         user.local.verified = true;
         user.local.verificationNonce = null;
         user.save(function(err, user) {
@@ -164,6 +169,9 @@ module.exports = {
       }
     });
 
-  }
+  },
+
+  //create account on invitation
+
 
 };

@@ -6,6 +6,7 @@ var userControllers = require("../controllers/userControllers");
 var verifyJwt = require("../middlewares/verifyJwt");
 router.use(verifyJwt);
 
+//routes
 router.get("/", userControllers.readOneOrMany);
 router.post("/", userControllers.createOneLocalAccount);
 router.put("/", userControllers.updateOne);

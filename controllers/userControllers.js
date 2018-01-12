@@ -155,7 +155,7 @@ module.exports = {
 
       //update fields (admin)
       if (req.body.loginFailCount && req.decoded.permissions && req.decoded.permissions.indexOf("user") != -1) {
-        user.set({"local.loginFailCount": 0});
+        user.set({"local.loginFailCount": null});
       }
 
       //save object
