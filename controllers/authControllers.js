@@ -78,18 +78,31 @@ module.exports = {
       return res.json({message: "Missing login information"});
     }
 
-    //check email and password
+    //search by email
     User.findOne({"local.email": req.body.email}, function(err, user) {
-      if (err || user == "") {
+      if (err || !user || user == "") {
         res.status(400);
         return res.json({message: "Local login email does not exist"});
       }
 
-      //verify password
+      //check if locked
+      if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
+        res.status(400);
+        return res.json({
+          message: "Account locked",
+          redirect: "/auth/account-locked"
+        });
+      }
+
+      //verify password (how to make is sync? await?)
       let passwordIsCorrect = bcrypt.compareSync(req.body.password, user.local.password);
       if (!passwordIsCorrect) {
-        res.status(400);
-        return res.json({message: "Wrong password"});
+        user.local.loginFailCount = user.local.loginFailCount + 1;
+        user.save(function(err, user) {
+          console.log(err);
+          res.status(400);
+          return res.json({message: "Wrong password"});
+        });
       }
 
       //generate token
@@ -99,19 +112,12 @@ module.exports = {
       };
       let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
 
-      //check if user is verified or unlocked, redirect if not
+      //check if user is verified, redirect if not
       if (!user.local.verified) {
         res.status(300);
         return res.json({
           message: "Redirect to resend verification page",
           redirect: "/auth/resend-verification",
-          token: token
-        });
-      } else if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
-        res.status(300);
-        return res.json({
-          message: "Redirect to account locked page",
-          redirect: "/auth/account-locked",
           token: token
         });
       } else {
@@ -125,6 +131,37 @@ module.exports = {
         });
       }
 
+    });
+
+  },
+
+  //activate local account
+  activateAccount: function(req, res) {
+
+    //check query completeness
+    if (!req.qeury.userId || !req.query.nonce) {
+      res.status(400);
+      return res.json({message: "Invalid activation link"});
+    }
+
+    //check user db and nonce
+    User.findById(req.query.userId, function(err, user) {
+      if (err || user == "" || user.local.verified || user.local.verificationNonce != req.query.nonce) {
+        res.status(400);
+        return res.json({message: "Invalid activation link"});
+      } else {
+        user.local.verified = true;
+        user.local.verificationNonce = null;
+        user.save(function(err, user) {
+          if (err) {
+            res.status(500);
+            return res.json({message: "Database error"});
+          } else {
+            //redirect to frontend login page
+            return res.redirect("http://localhost:"+ config.port + "/auth/login");
+          }
+        });
+      }
     });
 
   }

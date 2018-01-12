@@ -175,11 +175,48 @@ module.exports = {
 
   deleteOne: function(req, res) {
 
+    //check admin permission
+    if (!req.decoded.permissions || req.decoded.permissions.indexOf("users") == -1) {
+      res.status(403);
+      return res.json({message: "No permission to delete users"});
+    }
+
+    //require userId
+    if (!req.query.userId) {
+      res.status(400);
+      return res.json({message: "Missing userId"});
+    }
+
+    User.findByIdAndRemove(req.query.userId, function(err, deletedUser) {
+      if (err || !deletedUser) {
+        res.status(400);
+        return res.json({message: "No such user"});
+      } else {
+        res.status(200);
+        return res.json({message: "User deleted", user: deletedUser});
+      }
+    });
+
   },
 
-  resentVerification: function(req, res) {
+  resendVerification: function(req, res) {
 
+    User.findById(req.decoded.userId, function(err, user) {
 
+      if(err || !user || user == "" || !user.local || !user.local.email) {
+        res.status(400);
+        return res.json({message: "User does not exist"});
+      }
+      if (user.local.verified) {
+        res.status(400);
+        return res.json({message: "User already verified"});
+      }
+
+      verify(createdUser);
+      res.status(200);
+      return res.json({message: "Verification sent"});
+
+    });
 
   }
 

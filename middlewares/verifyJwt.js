@@ -9,7 +9,6 @@ var verifyJwt = function (req, res, next) {
   //check token exist
   var token = req.headers.token || req.headers['x-access-token'];
   if (!token) {
-    //401: unauthenticated
     res.status(401);
     return res.json({message: "No token provided"});
   }
@@ -34,7 +33,7 @@ var verifyJwt = function (req, res, next) {
 
   //check if user is verified or unlocked, redirect if not
   User.findById(req.decoded.userId, function(err, user) {
-    if (err) {
+    if (err || user == "") {
       res.status(500);
       return res.json({message: "Database error", error: err});
     }
@@ -45,14 +44,14 @@ var verifyJwt = function (req, res, next) {
         redirect: "/auth/resend-verification"
       });
     }
-    if (user.local.loginFailCount >= 3) {
+    if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
       res.status(300);
       return res.json({
         message: "Redirect to account locked page",
         redirect: "/auth/account-locked"
       });
     }
-  })
+  });
 
   next();
 
