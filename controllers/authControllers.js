@@ -9,7 +9,7 @@ var verify = require("../middlewares/sendVerification");
 module.exports = {
 
   //local auth signup
-  localSignup: function(req, res) {
+  localSignup: async function(req, res) {
 
     console.log("=====localSignup=====");
 
@@ -23,54 +23,55 @@ module.exports = {
     }
 
     //check if email exists in database
-    User.find({$or: [
+    let dbQuery = User.find({$or: [
       {"local.email": req.body.email},
       {"facebook.email": req.body.email},
       {"google.email": req.body.email}
-    ]}, function(err, user) {
+    ]});
+    let queryResult = await dbQuery.exec(function(err, user) {
       if (user != "") {
         res.status(400);
         return res.json({message: "Email already used by other users"});
+      }
+    });
+
+    //construct new user object
+    let newUserInfo = {
+      local: {
+        name: req.body.name,
+        email: req.body.email,
+        verified: false
+      },
+      role: "user"
+    };
+    //salt password (sync for now)
+    newUserInfo.local.password = bcrypt.hashSync(req.body.password, 10);
+    console.log(newUserInfo);
+
+    //save to db
+    var newUser = new User(newUserInfo);
+    newUser.save((err, createdUser) => {
+      if (err) {
+        res.status(500);
+        return res.json({message: "Fail to create user in database"});
       } else {
-
-        //construct new user object
-        let newUserInfo = {
-          local: {
-            name: req.body.name,
-            email: req.body.email,
-            verified: false
-          },
-          role: "user"
-        };
-        console.log(newUserInfo);
-
-        //salt password (sync for now)
-        newUserInfo.local.password = bcrypt.hashSync(req.body.password, 10);
-        //save to db
-        var newUser = new User(newUserInfo);
-        newUser.save((err, createdUser) => {
-          if (err) {
-            res.status(500);
-            return res.json({message: "Fail to create user in database"});
-          } else {
-            //set nonce and send verification email
-            verify(createdUser);
-            //redirect to resend page
-            res.status(300);
-            return res.json({
-              message: "Redirect to resend verification",
-              redirect: "/auth/resend-verification"
-            });
-          }
+        //set nonce and send verification email
+        verify(createdUser);
+        //redirect to resend page
+        res.status(300);
+        return res.json({
+          message: "Redirect to resend verification",
+          redirect: "/auth/resend-verification"
         });
-
       }
     });
 
   },
 
   //local auth login
-  localLogin: function(req, res) {
+  localLogin: async function(req, res) {
+
+    console.log("=====login controller=====");
 
     //check complete information
     if (!req.body.email || !req.body.password) {
@@ -79,58 +80,57 @@ module.exports = {
     }
 
     //search by email
-    User.findOne({"local.email": req.body.email}, function(err, user) {
-      if (err || !user || user == "") {
-        res.status(400);
-        return res.json({message: "Local login email does not exist"});
-      }
+    let userObj = await User.findOne()
+    .where({"local.email": req.body.email})
+    .exec()
+    .catch(err => {
+      console.log(err);
+      res.status(400);
+      return res.json({message: "Local login email does not exist"});
+    });
 
-      //check if locked
-      if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
-        res.status(400);
-        return res.json({
-          message: "Account locked",
-          redirect: "/auth/account-locked"
-        });
-      }
+    //check if locked
+    if (userObj.local.loginFailCount && userObj.local.loginFailCount >= 3) {
+      res.status(400);
+      return res.json({
+        message: "Account locked",
+        redirect: "/auth/account-locked"
+      });
+    }
 
-      //verify password (how to make is sync? await?)
-      let passwordIsCorrect = bcrypt.compareSync(req.body.password, user.local.password);
-      if (!passwordIsCorrect) {
-        user.local.loginFailCount = user.local.loginFailCount + 1;
-        user.save(function(err, user) {
-          console.log(err);
-          res.status(400);
-          return res.json({message: "Wrong password"});
-        });
-      }
+    //verify password, if incorrect, increment count
+    let passwordIsCorrect = bcrypt.compareSync(req.body.password, userObj.local.password);
+    if (!passwordIsCorrect) {
+      userObj.local.loginFailCount = userObj.local.loginFailCount + 1;
+      userObj.save();
+      res.status(400);
+      return res.json({message: "Wrong password"});
+    }
 
-      //generate token
-      let payload = {
-        "userId": user._id,
-        "role": user.role
-      };
-      let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+    //generate token
+    let payload = {
+      "userId": userObj._id,
+      "role": userObj.role
+    };
+    let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
 
-      //check if user is verified, redirect if not
-      if (!user.local.verified) {
-        res.status(300);
-        return res.json({
-          message: "Redirect to resend verification page",
-          redirect: "/auth/resend-verification",
-          token: token
-        });
-      } else {
-        //successful login, redirect to meals page
-        let mealsPageLink = "/meals?userId=" + user._id;
-        res.status(300);
-        return res.json({
-          message: "Redirect to meals page",
-          redirect: mealsPageLink,
-          token: token
-        });
-      }
+    //check if user is verified, redirect if not
+    if (!userObj.local.verified) {
+      res.status(300);
+      return res.json({
+        message: "Redirect to resend verification page",
+        redirect: "/auth/resend-verification",
+        token: token
+      });
+    }
 
+    //successful login, redirect to meals page
+    let mealsPageLink = "/meals?userId=" + userObj._id;
+    res.status(300);
+    return res.json({
+      message: "Redirect to meals page",
+      redirect: mealsPageLink,
+      token: token
     });
 
   },

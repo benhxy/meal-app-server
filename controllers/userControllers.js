@@ -1,3 +1,4 @@
+var bcrypt = require("bcrypt");
 var User = require("../models/userModel");
 var config = require("../config");
 var verify = require("../middlewares/sendVerification");
@@ -77,7 +78,7 @@ module.exports = {
       {"google.email": req.body.email}
     ]);
     query.exec((err, user) => {
-      if (user) {
+      if (user != "") {
         res.status(400);
         return res.json({message: "This email is already in use"});
       } else {
