@@ -9,8 +9,7 @@ var verifyJwt = function (req, res, next) {
   //check token exist
   var token = req.headers.token || req.headers['x-access-token'];
   if (!token) {
-    res.status(401);
-    return res.json({message: "No token provided"});
+    return res.status(401).json({message: "No token provided"});
   }
 
   //validate token
@@ -18,8 +17,7 @@ var verifyJwt = function (req, res, next) {
   jwt.verify(token, config.jwtSecret, (err, decoded) => {
     if (err) {
       console.log(err);
-      res.status(401);
-      return res.json({message: "Token validation failed"});
+      return res.status(401).json({message: "Token validation failed"});
     } else {
       //populate userId and permissions
       req.decoded = {}; //important, must initiate object first
@@ -35,19 +33,16 @@ var verifyJwt = function (req, res, next) {
   let dbQuery = User.findById(req.decoded.userId);
   let redirect = dbQuery.exec(function(err, user) {
     if (err || user == "") {
-      res.status(500);
-      return res.json({message: "Database error", error: err});
+      return res.status(500).json({message: "Database error", error: err});
     }
     if (!user.local.verified) {
-      res.status(300);
-      return res.json({
+      return res.status(300).json({
         message: "Redirect to resend verification page",
         redirect: "/auth/resend-verification"
       });
     }
     if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
-      res.status(300);
-      return res.json({
+      return res.status(300).json({
         message: "Redirect to account locked page",
         redirect: "/auth/account-locked"
       });

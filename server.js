@@ -16,13 +16,13 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 var path = require('path');
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
-app.use(morgan('dev'));
+//app.use(morgan('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 
 //temp
 app.get("/", (req, res) => {
-  res.send("Hello");
+  return res.send("Hello");
 });
 
 

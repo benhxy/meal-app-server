@@ -3,7 +3,7 @@ var randomstring = require("randomstring");
 
 var config = require("../config");
 
-var sendVerification = function(user) {
+var sendInvitation = function(user, tempPassword) {
 
   console.log("=====send verfication=====");
   console.log(user);
@@ -16,11 +16,12 @@ var sendVerification = function(user) {
   let transporter = nodemailer.createTransport(config.mailer);
 
   //set email content
-  let emailText = "Click this to activate your account: http://localhost:" + config.port + "/api/public/activate-account?userId=" + userId + "&nonce=" + nonce;
+  let emailText = "Click this to activate your account: http://localhost:" + config.port + "/api/public/activate-account?userId=" + userId + "&nonce=" + nonce + "\nYour temporary password is: " + tenpPassword;
+
   let mailOptions = {
     from: 'benhu.seattle@gmail.com',
     to: email,
-    subject: 'Verification email',
+    subject: 'Invitation email',
     text: emailText
   };
 
@@ -35,4 +36,4 @@ var sendVerification = function(user) {
 
 };
 
-module.exports = sendVerification;
+module.exports = sendInvitation;

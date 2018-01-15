@@ -4,14 +4,10 @@
   "description": "Backend of meal-tracking web app",
   "main": "server.js",
   "repository": "",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Ben Hu",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^1.0.3",
-    "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
     "jsonwebtoken": "^8.1.0",
@@ -20,6 +16,13 @@
     "nodemailer": "^4.4.1",
     "nodemon": "^1.14.10",
     "path": "^0.12.7",
-    "randomstring": "^1.1.5"
-  }
+    "randomstring": "^1.1.5",
+    "validator": "^9.2.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-http": "^2.0.1",
+    "mocha": "^2.4.5"
+  },
+  "scripts": {}
 }
