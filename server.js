@@ -7,7 +7,6 @@ var config = require("./config");
 
 //mongoose and mongodb
 var mongoose = require("mongoose");
-mongoose.Promise = require('bluebird');
 mongoose.connect(config.databaseUrl, {useMongoClient: true});
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -16,13 +15,13 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 var path = require('path');
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
-//app.use(morgan('dev'));
+app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
 //temp
-app.get("/", (req, res) => {
-  return res.send("Hello");
+app.get("/api/test", (req, res) => {
+  return res.json({message: "Hello!!!"});
 });
 
 
@@ -66,8 +65,8 @@ server.on('error', (error) => {
   }
 
   var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+    ? 'Pipe ' + config.port
+    : 'Port ' + config.port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {

@@ -7,7 +7,7 @@ var config = require("../config");
 //models
 var User = require("../models/userModel");
 //middlewares
-var emailExists = require("../middlewares/emailExists");
+var checkEmailExist = require("../middlewares/checkEmailExist");
 var sendInvitation = require("../middlewares/sendInvitation");
 var sendVerification = require("../middlewares/sendVerification");
 
@@ -49,7 +49,7 @@ module.exports = {
         if (err) {
           return res.status(500).json({message: "Database error", error: err});
         } else {
-          return res.status(200)..json({users: userArray});
+          return res.status(200).json({users: userArray});
         }
       });
 
@@ -72,7 +72,7 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (emailExists(req.body.email) {
+    if (checkEmailExist(req.body.email)) {
       return res.status(400).json({message: "This email is already in use"});
     }
 
@@ -114,7 +114,7 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (emailExists(req.body.email) {
+    if (checkEmailExist(req.body.email)) {
       return res.status(400).json({message: "This email is already in use"});
     }
 

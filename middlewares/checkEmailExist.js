@@ -1,6 +1,6 @@
 var User = require("../models/userModel");
 
-var emailExists = async function(email) {
+var checkEmailExist = async function(email) {
 
   //check if email exists in database
   let dbQuery = User.find({$or: [

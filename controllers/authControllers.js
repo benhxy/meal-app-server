@@ -8,7 +8,7 @@ var config = require("../config");
 //models
 var User = require("../models/userModel");
 //middlewares
-var emailExists = require("../middlewares/emailExists");
+var checkEmailExist = require("../middlewares/checkEmailExist");
 var sendInvitation = require("../middlewares/sendInvitation");
 var sendVerification = require("../middlewares/sendVerification");
 
@@ -25,7 +25,7 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (emailExists(req.body.email) {
+    if (checkEmailExist(req.body.email)) {
       return res.status(400).json({message: "This email is already in use"});
     }
 
@@ -100,18 +100,21 @@ module.exports = {
     //check if user is verified, redirect if not
     if (!userObj.local.verified) {
       return res.status(300).json({
-        message: "Redirect to resend verification page",
+        message: "Login successdul, redirect to resend verification page",
         redirect: "/auth/resend-verification",
-        token: token
+        token: token,
+        role: userObj.role,
+        userId: userObj._id
       });
     }
 
     //successful login, redirect to meals page
-    let mealsPageLink = "/meals?userId=" + userObj._id;
     return res.status(300).json({
-      message: "Redirect to meals page",
-      redirect: mealsPageLink,
-      token: token
+      message: "Login successdul, redirect to meals page",
+      redirect: "/meals",
+      token: token,
+      role: userObj.role,
+      userId: userObj._id
     });
 
   },
