@@ -3,6 +3,7 @@ var bcrypt = require("bcrypt");
 var jwt = require("jsonwebtoken");
 var randomstring = require("randomstring");
 var validator = require("validator");
+var axios = require("axios");
 //config
 var config = require("../config");
 //models
@@ -48,7 +49,7 @@ module.exports = {
         let newUser = new User(newUserInfo);
         newUser.save((err, createdUser) => {
           if (err) {
-            return res.json({message: "Fail to create user in database"});
+            return res.status(500).json({message: "Fail to create user in database"});
           } else {
             //set nonce and send verification email
             sendVerification(createdUser);
@@ -108,7 +109,8 @@ module.exports = {
         redirect: "/auth/resend-verification",
         token: token,
         role: userObj.role,
-        userId: userObj._id
+        userId: userObj._id,
+        expectedKcal: userObj.expectedKcal
       });
     }
 
@@ -156,7 +158,103 @@ module.exports = {
 
   },
 
-  //create account on invitation
+  facebookLogin: async function(req, res) {
+
+    console.log("=====facebook login=====");
+
+/* Implement in the future
+    //get app access token
+    if (config.facebookAppAccessToken == "") {
+      let fbTokenLink = "https://graph.facebook.com/oauth/access_token?client_id=" + config.facebookAppId + "&client_secret=" + config.facebookAppSecret + "&grant_type=client_credentials";
+      axios.get(fbTokenLink)
+        .then(response => {
+          config.facebookAppAccessToken = response.data.access_token;
+        })
+        .catch(err => console.log(err.response.headers));
+    }
+
+    let fbObj = req.body.fbObj;
+    let fbValidLink = "https://graph.facebook.com/debug_token?" + 
+      "input_token=" + fbObj.accessToken + 
+      "&access_token=" + config.facebookAppAccessToken;
+    
+    axios.get(fbValidLink)
+      .then(response =>  {
+        console.log(response.data)
+      })
+      .catch(err => console.log(err.response.headers));
+*/
+
+    let fbObj = req.body.fbObj;
+    //check email exists
+    User.findOne({$or: [
+      {"local.email": fbObj.email},
+      {"facebook.email": fbObj.email},
+      {"google.email": fbObj.email}
+    ]}, function(err, user) {
+      if (user == null || user == undefined) {
+        //create user now
+        let newUserInfo = {
+          local: {
+            verified: true
+          },
+          facebook: {
+            name: fbObj.name,
+            email: fbObj.email,
+            id: fbObj.id,
+            token: fbObj.accessToken
+          },
+          role: "user"
+        };
+
+        let newUser = new User(newUserInfo);
+        newUser.save(function(err, createdUser) {
+          if (err) {
+            return res.status(500).json({message: "Fail to create user in database"});
+          } else {
+            //provide token and redirect
+            let payload = {
+              "userId": createdUser._id,
+              "role": createdUser.role
+            };
+            let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+            return res.json({
+              message: "Login successdul, redirect to meals page",
+              redirect: "/meals",
+              token: token,
+              role: createdUser.role,
+              userId: createdUser._id,
+              expectedKcal: createdUser.expectedKcal
+            });
+          }
+        });
+
+      } else {
+        //set user verified
+        user.set({"local.verified": true}).save(function(err, updatedUser) {
+          //provide token and redirect
+          let payload = {
+            "userId": updatedUser._id,
+            "role": updatedUser.role
+          };
+          let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+          return res.json({
+            message: "Login successdul, redirect to meals page",
+            redirect: "/meals",
+            token: token,
+            role: updatedUser.role,
+            userId: updatedUser._id,
+            expectedKcal: updatedUser.expectedKcal
+          });
+        });
+
+        
+      }
+
+
+    });
+
+  },
 
 
 };

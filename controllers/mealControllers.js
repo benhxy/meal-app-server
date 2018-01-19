@@ -52,15 +52,17 @@ module.exports = {
 
   createOne: async function(req, res) {
 
+    console.log("=====create meal record=====");
+
     let mealObj = {};
 
     //create for other users
-    if (req.body.userId && req.body.userId != req.decoded.userId) {
+    if (req.body.user && (req.body.user != req.decoded.userId)) {
       //check admin permission
       if (req.decoded.permissions.indexOf("all-meals") == -1) {
         return res.status(403).json({message: "No permission to others' records"});
       } else {
-        mealObj.user = new ObjectId(req.body.userId);
+        mealObj.user = new ObjectId(req.body.user);
       }
     } else {
       mealObj.user = new ObjectId(req.decoded.userId);
@@ -94,24 +96,21 @@ module.exports = {
 
   updateOne: function(req, res) {
 
+    console.log("=====update meal record=====");
+
     //check meal id
-    if (!req.body.mealId) {
+    if (!req.query.mealId) {
       return res.status(400).json({message: "Missing record ID"});
     }
 
-    //check time within range
-    if (req.body.time && (req.body.time < 0 || req.body.time >= 1440)) {
-      return res.status(400).json({message: "Time out of range"});
-    }
+    Meal.findById(req.query.mealId, function(err, meal) {
 
-    Meal.findById(req.body.mealId, function(err, meal) {
-
-      if (err || meal == "") {
+      if (meal == null || meal == undefined) {
         return res.status(400).json({message: "Record does not exist"});
       }
 
       //check permission if editing other user's record
-      if (!meal.user.equals(res.decoded.userId) && res.decoded.permissions.indexOf("all-meals") == -1) {
+      if (!meal.user.equals(req.decoded.userId) && req.decoded.permissions.indexOf("all-meals") == -1) {
         return res.status(403).json({message: "No permission to others' records"});
       }
 
@@ -130,13 +129,14 @@ module.exports = {
       }
 
       //save to db
-      meal.save(function(err, updatedMeal) {
-        if (err || updatedMeal == "") {
-          return res.status(500).json({message: "Database error"});
-        } else {
-          return res.status(200).json({message: "Record updated", meal: updatedMeal});
-        }
-      });
+      let newMeal = new Meal(mealObj);
+    newMeal.save(function(err, updatedMeal) {
+      if (err) {
+        return res.status(500).json({message: "Database error"});
+      } else {
+        return res.status(200).json({message: "Meal created", meal: updatedMeal});
+      }
+    });
 
     });
 
@@ -145,14 +145,14 @@ module.exports = {
   deleteOne: function(req, res) {
 
     //check meal
-    if (!req.body.mealId) {
+    if (!req.query.mealId) {
       return res.status(400).json({message: "Missing record ID"});
     }
 
-    Meal.findById(req.body.mealId, function(err, meal) {
+    Meal.findById(req.query.mealId, function(err, meal) {
 
       //check permission if editing other user's record
-      if (!meal.user.equals(res.decoded.userId) && res.decoded.permissions.indexOf("all-meals") == -1) {
+      if (!meal.user.equals(req.decoded.userId) && req.decoded.permissions.indexOf("all-meals") == -1) {
         return res.status(403).json({message: "No permission to others' records"});
       }
 
