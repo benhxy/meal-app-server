@@ -1,11 +1,16 @@
 var axios = require("axios");
+var moment = require("moment");
 var Meal = require("../models/mealModel");
+var ObjectId = require("mongoose").Types.ObjectId;
+
 var config = require("../config");
 var verify = require("../middlewares/sendVerification");
 
 module.exports = {
 
   readMany: function(req, res) {
+
+    console.log("=====view meal records=====")
 
     //read one user's meals
     if (req.query.userId) {
@@ -15,31 +20,13 @@ module.exports = {
         return res.status(403).json({message: "No permission to others' records"});
       }
 
-      //create filter
-      let filter = {
-        "date": {},
-        "time": {},
-        "user": ObjectId(req.query.userId),
-      };
-      if (req.query.fromDate) {
-        filter.date.$gte = req.query.fromDate;
-      }
-      if (req.query.toDate) {
-        filter.date.$lte = req.query.toDate;
-      }
-      if (req.query.fromTime) {
-        filter.date.$gte = req.query.fromTime;
-      }
-      if (req.query.toTime) {
-        filter.date.$lte = req.query.toTime;
-      }
-
       //query db
-      Meal.find(filter, function(err, mealArray) {
-        if (err) {
-          return res.status(500).json({message: "Database error"});
-        } else {
+      Meal.find({"user": new ObjectId(req.query.userId)
+      }, function(err, mealArray) {
+        if (mealArray != null) {
           return res.status(200).json({meals: mealArray});
+        } else {
+          return res.status(500).json({message: "Database error"});
         }
       });
 
@@ -50,30 +37,12 @@ module.exports = {
         return res.status(403).json({message: "No permission to others' records"});
       }
 
-      //create filter
-      let filter = {
-        "date": {},
-        "time": {}
-      };
-      if (req.query.fromDate) {
-        filter.date.$gte = req.query.fromDate;
-      }
-      if (req.query.toDate) {
-        filter.date.$lte = req.query.toDate;
-      }
-      if (req.query.fromTime) {
-        filter.date.$gte = req.query.fromTime;
-      }
-      if (req.query.toTime) {
-        filter.date.$lte = req.query.toTime;
-      }
-
       //query db
-      Meal.find(filter, function(err, mealArray) {
-        if (err) {
-          return res.status(500).json({message: "Database error"});
-        } else {
+      Meal.find({}, function(err, mealArray) {
+        if (mealArray != null) {
           return res.status(200).json({meals: mealArray});
+        } else {
+          return res.status(500).json({message: "Database error"});
         }
       });
 
@@ -91,8 +60,10 @@ module.exports = {
       if (req.decoded.permissions.indexOf("all-meals") == -1) {
         return res.status(403).json({message: "No permission to others' records"});
       } else {
-        mealObj.user = ObjectId(req.body.userId);
+        mealObj.user = new ObjectId(req.body.userId);
       }
+    } else {
+      mealObj.user = new ObjectId(req.decoded.userId);
     }
 
     //check completeness
@@ -100,12 +71,7 @@ module.exports = {
       return res.status(400).json({message: "Incomplete meal information"});
     }
 
-    //check time within range
-    if (req.body.time < 0 || req.body.time >= 1440) {
-      return res.status(400).json({message: "Time out of range"});
-    }
-
-    mealObj.date = req.body.date;
+    mealObj.date = moment(req.body.date);
     mealObj.time = req.body.time;
     mealObj.food = req.body.food;
     if (req.body.kcal) {

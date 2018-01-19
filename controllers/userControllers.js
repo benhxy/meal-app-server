@@ -7,7 +7,6 @@ var config = require("../config");
 //models
 var User = require("../models/userModel");
 //middlewares
-var checkEmailExist = require("../middlewares/checkEmailExist");
 var sendInvitation = require("../middlewares/sendInvitation");
 var sendVerification = require("../middlewares/sendVerification");
 
@@ -45,10 +44,33 @@ module.exports = {
       //query db (without pulling profile pics)
       User.find({})
       .select("local facebook google role expectedKcal")
-      .exec(function(err, userArray) {
+      .exec(function(err, userResult) {
         if (err) {
           return res.status(500).json({message: "Database error", error: err});
         } else {
+          //remove unused login account
+          let userArray = userResult.map(function(user) {
+            let consolidated = {
+              role: user.role,
+              profilePic: user.profilePic,
+              expectedKcal: user.expectedKcal
+            };
+            console.log(user.facebook.id == undefined);
+            if (user.facebook.id != undefined) {
+              consolidated.name = user.facebook.name;
+              consolidated.email = user.facebook.email;
+              consolidated.accountType = "Facebook";
+            } else if (user.google.id != undefined) {
+              consolidated.name = user.google.name;
+              consolidated.email = user.google.email;
+              consolidated.accountType = "Google";
+            } else {
+              consolidated.name = user.local.name;
+              consolidated.email = user.local.email;
+              consolidated.accountType = "Local";
+            }
+            return consolidated;
+          });
           return res.status(200).json({users: userArray});
         }
       });
@@ -57,7 +79,7 @@ module.exports = {
 
   },
 
-  createOneLocalAccount: async function(req, res) {
+  createOneLocalAccount: function(req, res) {
     //create a user with any role, without verification
     //database hit: 2
 
@@ -72,34 +94,40 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (checkEmailExist(req.body.email)) {
-      return res.status(400).json({message: "This email is already in use"});
-    }
-
-    //construct new user object
-    let newUserInfo = {
-      local: {
-        name: req.body.name,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 10),
-        verified: true
-      },
-      role: req.body.role
-    };
-
-    //save to db
-    var newUser = new User(newUserInfo);
-    newUser.save((err, createdUser) => {
-      if (err) {
-        return res.status(500).json({message: "Database error"});
+    User.findOne({$or: [
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
+    ]}, function(err, user) {
+      if (user != null || user != undefined) {
+        return res.status(400).json({message: "This email is already in use"});
       } else {
-        return res.status(200).json({message: "New user created", user: createdUser});
+        //create user object
+        let newUserInfo = {
+          local: {
+            name: req.body.name,
+            email: req.body.email,
+            password: bcrypt.hashSync(req.body.password, 10),
+            verified: true
+          },
+          role: req.body.role
+        };
+
+        //save to db
+        let newUser = new User(newUserInfo);
+        newUser.save((err, createdUser) => {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            return res.status(200).json({message: "New user created", user: createdUser});
+          }
+        });
       }
     });
 
   },
 
-  createOneLocalAccountAndInvite: async function(req, res) {
+  createOneLocalAccountAndInvite: function(req, res) {
     //create a user account (user role only) and send invitation email. not verified
     //database hit: 2
 
@@ -114,37 +142,43 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (checkEmailExist(req.body.email)) {
-      return res.status(400).json({message: "This email is already in use"});
-    }
-
-    //create user object
-    let tempPassword = randomstring.generate(20);
-    let newUserInfo = {
-      local: {
-        name: req.body.name,
-        email: req.body.email,
-        password: bcrypt.hashSync(tempPassword, 10),
-        verified: false,
-        verificationNonce: randomstring.generate(20)
-      },
-      role: "user"
-    }
-
-    //save to db
-    var newUser = new User(newUserInfo);
-    newUser.save((err, createdUser) => {
-      if (err) {
-        return res.status(500).json({message: "Database error"});
+    User.findOne({$or: [
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
+    ]}, function(err, user) {
+      if (user != null || user != undefined) {
+        return res.status(400).json({message: "This email is already in use"});
       } else {
-        sendInvitation(createdUser);
-        return res.status(200).json({message: "New user created", user: createdUser});
+        //create user object
+        let tempPassword = randomstring.generate(20);
+        let newUserInfo = {
+          local: {
+            name: req.body.name,
+            email: req.body.email,
+            password: bcrypt.hashSync(tempPassword, 10),
+            verified: false,
+            verificationNonce: randomstring.generate(20)
+          },
+          role: "user"
+        }
+
+        //save to db
+        let newUser = new User(newUserInfo);
+        newUser.save((err, createdUser) => {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            sendInvitation(createdUser);
+            return res.status(200).json({message: "New user created", user: createdUser});
+          }
+        });
       }
-    });
+    })
 
   },
 
-  updateOne: async function(req, res) {
+  updateOne: function(req, res) {
     //update user by self or admin
     //database hit: 2
 
@@ -154,48 +188,50 @@ module.exports = {
     }
 
     //search by userId
-    let user = await User.findById(req.query.userId)
-    .exec()
-    .catch(err => {
-      console.log(err);
-      return res.status(400).json({message: "Invalid user ID"});
-    });
-
-    //update fields (self)
-    if (req.body.name) {
-      user.set({"local.name": req.body.name});
-    }
-    if (req.body.password) {
-      bcrypt.hash(req.body.password, 10).then((hash) => {
-        user.set({"local.password": hash});
-      });
-    }
-    if (req.body.expectedKcal) {
-      user.set({"expectedKcal": req.body.expectedKcal});
-    }
-    if (req.body.profilePic) {
-      user.set({"profilePic": req.body.profilePic});
-    }
-
-    //update fields (admin)
-    if (req.decoded.permissions && req.decoded.permissions.indexOf("user") != -1) {
-      if (req.body.loginFailCount) {
-        user.set({"local.loginFailCount": req.body.loginFailCount});
-      }
-      if (req.body.role && config.roles[req.body.role] != undefined) {
-        user.set({"role": req.body.role});
-      }
-    }
-
-    //save object
-    user.save(function(err, updatedUser) {
-      if (err) {
-        return res.status(500).json({message: "Database error"});
+    User.findById(req.query.userId, function(err, user) {
+      if (user == null || user == undefined) {
+        return res.status(400).json({message: "Invalid user ID"});
       } else {
-        return res.status(200).json({message: "User updated", user: updatedUser});
+        
+        //update fields (self)
+        if (req.body.name) {
+          user.set({"local.name": req.body.name});
+        }
+        if (req.body.password) {
+          bcrypt.hash(req.body.password, 10).then((hash) => {
+            user.set({"local.password": hash});
+          });
+        }
+        if (req.body.expectedKcal) {
+          user.set({"expectedKcal": req.body.expectedKcal});
+        }
+        if (req.body.profilePic) {
+          user.set({"profilePic": req.body.profilePic});
+        }
+
+        //update fields (admin only)
+        if (req.decoded.permissions && req.decoded.permissions.indexOf("users") != -1) {
+          if (req.body.loginFailCount) {
+            user.set({"local.loginFailCount": req.body.loginFailCount});
+          }
+
+          if (req.body.role && config.roles[req.body.role] != undefined) {
+            user.set({"role": req.body.role});
+          }
+        }
+
+        //save to db
+        user.save(function(err, updatedUser) {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            return res.status(200).json({message: "User updated", user: updatedUser});
+          }
+        });
+
       }
     });
-
+    
   },
 
   deleteOne: function(req, res) {

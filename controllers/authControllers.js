@@ -8,7 +8,6 @@ var config = require("../config");
 //models
 var User = require("../models/userModel");
 //middlewares
-var checkEmailExist = require("../middlewares/checkEmailExist");
 var sendInvitation = require("../middlewares/sendInvitation");
 var sendVerification = require("../middlewares/sendVerification");
 
@@ -25,37 +24,44 @@ module.exports = {
     }
 
     //check if email exists in database
-    if (checkEmailExist(req.body.email)) {
-      return res.status(400).json({message: "This email is already in use"});
-    }
-
-    //construct new user object
-    let newUserInfo = {
-      local: {
-        name: req.body.name,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, 10),
-        verified: false
-      },
-      role: "user"
-    };
-
-    //save to db
-    var newUser = new User(newUserInfo);
-    newUser.save((err, createdUser) => {
-      if (err) {
-        return res.status(500).json({message: "Fail to create user in database"});
+    User.findOne({$or: [
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
+    ]}, function(err, user) {
+      if (user != null || user != undefined) {
+        return res.status(400).json({message: "This email is already in use"});
       } else {
-        //set nonce and send verification email
-        sendVerification(createdUser);
-        //redirect to resend page
-        return res.status(300).json({
-          message: "Redirect to login page",
-          redirect: "/auth/login"
+        //construct new user object
+        let newUserInfo = {
+          local: {
+            name: req.body.name,
+            email: req.body.email,
+            password: bcrypt.hashSync(req.body.password, 10),
+            verified: false,
+            loginFailCount: 0
+          },
+          role: "user"
+        };
+
+        //save to db
+        let newUser = new User(newUserInfo);
+        newUser.save((err, createdUser) => {
+          if (err) {
+            return res.json({message: "Fail to create user in database"});
+          } else {
+            //set nonce and send verification email
+            sendVerification(createdUser);
+            //redirect to resend page
+            return res.json({
+              message: "Redirect to login page",
+              redirect: "/auth/login"
+            });
+          }
         });
       }
-    });
-
+    })
+    
   },
 
   //local auth login
@@ -69,12 +75,10 @@ module.exports = {
     }
 
     //search by email
-    let userObj = await User.findOne()
-    .where({"local.email": req.body.email})
-    .exec()
-    .catch(err => {
-      console.log(err);
-      return res.status(400).json({message: "Local login email does not exist"});
+    let userObj = await User.findOne({"local.email": req.body.email}, function(err, user) {
+      if (user == null || user == undefined) {
+        return res.status(400).json({message: "Local login email does not exist"});
+      }
     });
 
     //check if locked
@@ -99,7 +103,7 @@ module.exports = {
 
     //check if user is verified, redirect if not
     if (!userObj.local.verified) {
-      return res.status(300).json({
+      return res.json({
         message: "Login successdul, redirect to resend verification page",
         redirect: "/auth/resend-verification",
         token: token,
@@ -109,7 +113,7 @@ module.exports = {
     }
 
     //successful login, redirect to meals page
-    return res.status(300).json({
+    return res.json({
       message: "Login successdul, redirect to meals page",
       redirect: "/meals",
       token: token,

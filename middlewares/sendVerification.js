@@ -6,7 +6,6 @@ var config = require("../config");
 var sendVerification = function(user) {
 
   console.log("=====send verfication=====");
-  console.log(user);
 
   let userId = user._id;
   let email = user.local.email;

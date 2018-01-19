@@ -7,6 +7,7 @@ var config = require("./config");
 
 //mongoose and mongodb
 var mongoose = require("mongoose");
+mongoose.Promise = require('bluebird');
 mongoose.connect(config.databaseUrl, {useMongoClient: true});
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
@@ -20,14 +21,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
 //temp
-app.get("/api/test", (req, res) => {
-  return res.json({message: "Hello!!!"});
+app.get("/api/test/", (req, res) => {
+  return res.json({message: req.body.name});
 });
 
 
 //unprotected public routes
-var publicRoutes = require("./routes/publicRoutes");
-app.use("/api/public/", publicRoutes);
+var authRoutes = require("./routes/authRoutes");
+app.use("/api/auth/", authRoutes);
 
 
 //protected routes

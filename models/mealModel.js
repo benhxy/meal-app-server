@@ -1,9 +1,11 @@
 var mongoose = require("mongoose");
+mongoose.Promise = require('bluebird');
+
 var Schema = mongoose.Schema;
 
 var MealSchema = new Schema({
   date: {type: Date, default: Date.now},
-  time: Number,
+  time: String,
   food: String,
   kcal: Number,
   user: {type: Schema.Types.ObjectId, ref:"User"}
