@@ -158,7 +158,7 @@ module.exports = {
 
   },
 
-  facebookLogin: async function(req, res) {
+  facebookLogin: function(req, res) {
 
     console.log("=====facebook login=====");
 
@@ -185,12 +185,11 @@ module.exports = {
       .catch(err => console.log(err.response.headers));
 */
 
-    let fbObj = req.body.fbObj;
     //check email exists
     User.findOne({$or: [
-      {"local.email": fbObj.email},
-      {"facebook.email": fbObj.email},
-      {"google.email": fbObj.email}
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
     ]}, function(err, user) {
       if (user == null || user == undefined) {
         //create user now
@@ -199,10 +198,10 @@ module.exports = {
             verified: true
           },
           facebook: {
-            name: fbObj.name,
-            email: fbObj.email,
-            id: fbObj.id,
-            token: fbObj.accessToken
+            id: req.body.id,
+            token: req.body.accessToken,
+            email: req.body.email,
+            name: req.body.name
           },
           role: "user"
         };
@@ -230,31 +229,125 @@ module.exports = {
         });
 
       } else {
-        //set user verified
-        user.set({"local.verified": true}).save(function(err, updatedUser) {
-          //provide token and redirect
-          let payload = {
-            "userId": updatedUser._id,
-            "role": updatedUser.role
-          };
-          let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
-          return res.json({
-            message: "Login successdul, redirect to meals page",
-            redirect: "/meals",
-            token: token,
-            role: updatedUser.role,
-            userId: updatedUser._id,
-            expectedKcal: updatedUser.expectedKcal
-          });
-        });
 
+        //set user verified
+        if (user.local.verified == false) {
+          user.set({"local.verified": true});
+        }
+
+        //insert facebook account info
+        if (user.facebook.id == undefined) {
+          user.set({
+            "facebook.id": req.body.id, 
+            "facebook.token": req.body.accessToken,
+            "facebook.name": req.body.name, 
+            "facebook.email": req.body.email
+          });
+          user.save();
+        }
+
+        //provide token and redirect
+        let payload = {
+          "userId": user._id,
+          "role": user.role
+        };
+        let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+        return res.json({
+          message: "Login successdul, redirect to meals page",
+          redirect: "/meals",
+          token: token,
+          role: user.role,
+          userId: user._id,
+          expectedKcal: user.expectedKcal
+        });
         
       }
-
-
     });
-
   },
 
+  googleLogin: function(req, res) {
+
+    console.log("=====google login=====");
+
+    //check email exists
+    User.findOne({$or: [
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
+    ]}, function(err, user) {
+      if (user == null || user == undefined) {
+        //create user now
+        let newUserInfo = {
+          local: {
+            verified: true
+          },
+          google: {
+            id: req.body.id,
+            token: req.body.accessToken,
+            email: req.body.email,
+            name: req.body.name
+          },
+          role: "user"
+        };
+
+        let newUser = new User(newUserInfo);
+        newUser.save(function(err, createdUser) {
+          if (err) {
+            return res.status(500).json({message: "Fail to create user in database"});
+          } else {
+            //provide token and redirect
+            let payload = {
+              "userId": createdUser._id,
+              "role": createdUser.role
+            };
+            let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+            return res.json({
+              message: "Login successdul, redirect to meals page",
+              redirect: "/meals",
+              token: token,
+              role: createdUser.role,
+              userId: createdUser._id,
+              expectedKcal: createdUser.expectedKcal
+            });
+          }
+        });
+
+      } else {
+
+        //set user verified
+        if (user.local.verified == false) {
+          user.set({"local.verified": true});
+        }
+
+        //insert google account info
+        if (user.google.id == undefined) {
+          user.set({
+            "google.id": req.body.id, 
+            "google.token": req.body.accessToken,
+            "google.name": req.body.name, 
+            "google.email": req.body.email
+          });
+          user.save();
+        }
+
+
+        //provide token and redirect
+        let payload = {
+          "userId": user._id,
+          "role": user.role
+        };
+        let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+        return res.json({
+          message: "Login successdul, redirect to meals page",
+          redirect: "/meals",
+          token: token,
+          role: user.role,
+          userId: user._id,
+          expectedKcal: user.expectedKcal
+        });
+        
+      }
+    });
+  },
 
 };
