@@ -257,7 +257,7 @@ module.exports = {
     });
 
   },
-
+/*
   resendVerification: function(req, res) {
     //resend verification by user
     //database hit: 1
@@ -277,5 +277,5 @@ module.exports = {
     });
 
   },
-
+*/
 };

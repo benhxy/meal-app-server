@@ -11,7 +11,6 @@ router.get("/", userControllers.readOneOrMany);
 
 router.post("/", userControllers.createOneLocalAccount);
 router.post("/send-invitation", userControllers.createOneLocalAccountAndInvite);
-router.post("/resend-verification", userControllers.resendVerification);
 
 router.put("/", userControllers.updateOne);
 

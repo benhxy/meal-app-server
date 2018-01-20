@@ -22,7 +22,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 //temp
 app.get("/api/test/", (req, res) => {
-  return res.json({message: req.body.name});
+  return res.redirect("http://localhost:3000/test/google-login");
 });
 
 
@@ -55,19 +55,19 @@ app.use(function(err, req, res, next) {
 module.exports = app;
 
 //start server
-app.set('port', config.port);
+app.set('port', config.serverPort);
 var http = require('http');
 var debug = require('debug')('app:server');
 var server = http.createServer(app);
-server.listen(config.port);
+server.listen(config.serverPort);
 server.on('error', (error) => {
   if (error.syscall !== 'listen') {
     throw error;
   }
 
   var bind = typeof port === 'string'
-    ? 'Pipe ' + config.port
-    : 'Port ' + config.port;
+    ? 'Pipe ' + config.serverPort
+    : 'Port ' + config.serverPort;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {

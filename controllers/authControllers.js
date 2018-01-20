@@ -87,7 +87,12 @@ module.exports = {
       return res.status(400).json({message: "Your account is locked"});
     }
 
-    //verify password, if incorrect, increment count
+    //check if verified
+    if (!userObj.local.verified) {
+      return res.status(400).json({message: "Your email is not yet verified"});
+    }
+
+    //check password, if incorrect, increment count
     let passwordIsCorrect = bcrypt.compareSync(req.body.password, userObj.local.password);
     if (!passwordIsCorrect) {
       userObj.local.loginFailCount = userObj.local.loginFailCount + 1;
@@ -101,18 +106,6 @@ module.exports = {
       "role": userObj.role
     };
     let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
-
-    //check if user is verified, redirect if not
-    if (!userObj.local.verified) {
-      return res.json({
-        message: "Login successdul, redirect to resend verification page",
-        redirect: "/auth/resend-verification",
-        token: token,
-        role: userObj.role,
-        userId: userObj._id,
-        expectedKcal: userObj.expectedKcal
-      });
-    }
 
     //successful login, redirect to meals page
     return res.json({
@@ -134,23 +127,23 @@ module.exports = {
     //check query completeness
     if (!req.query.userId || !req.query.nonce) {
       console.log("query incomplete");
-      return res.status(400).json({message: "Invalid activation link"});
+      return res.status(400).send("Invalid activation link");
     }
 
     //check user db and nonce
     User.findById(req.query.userId, function(err, user) {
-      if (err || user == "" || user.local.verified || user.local.verificationNonce != req.query.nonce) {
-        return res.status(400).json({message: "Invalid activation link"});
+      if (user == null || use == undefined || user.local.verificationNonce != req.query.nonce) {
+        return res.status(400).send("Invalid activation link");
       } else {
         //console.log(user);
         user.local.verified = true;
         user.local.verificationNonce = null;
-        user.save(function(err, user) {
+        user.save(function(err, updatedUser) {
           if (err) {
-            return res.status(500).json({message: "Database error"});
+            return res.status(500).send("Database error");
           } else {
             //redirect to frontend login page
-            return res.redirect("http://localhost:"+ config.port + "/auth/login");
+            return res.redirect("http://localhost:"+ config.clientPort + "/auth/login");
           }
         });
       }
@@ -329,7 +322,6 @@ module.exports = {
           });
           user.save();
         }
-
 
         //provide token and redirect
         let payload = {

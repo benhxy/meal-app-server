@@ -21,14 +21,17 @@ module.exports = {
       }
 
       //query db
-      Meal.find({"user": new ObjectId(req.query.userId)
-      }, function(err, mealArray) {
-        if (mealArray != null) {
-          return res.status(200).json({meals: mealArray});
-        } else {
-          return res.status(500).json({message: "Database error"});
-        }
-      });
+      Meal
+        .find({"user": new ObjectId(req.query.userId)
+        })
+        .populate("user")
+        .exec(function(err, mealArray) {
+          if (mealArray != null) {
+            return res.status(200).json({meals: mealArray});
+          } else {
+            return res.status(500).json({message: "Database error"});
+          }
+        });
 
     } else {
 
