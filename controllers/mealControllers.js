@@ -78,22 +78,65 @@ module.exports = {
     mealObj.date = moment(req.body.date);
     mealObj.time = req.body.time;
     mealObj.food = req.body.food;
-    if (req.body.kcal) {
+    if (req.body.kcal || req.body.kcal != "") {
       mealObj.kcal = req.body.kcal;
+
+      //save to db
+        let newMeal = new Meal(mealObj);
+        newMeal.save(function(err, savedMeal) {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            return res.status(200).json({message: "Record created", meal: savedMeal});
+          }
+        });
+        
     } else {
-      //query external API
+
+      console.log("=====getting calories=====")
+      
+      axios.post(
+        config.nutritionix.url, 
+        {"query": req.body.food}, 
+        {headers: config.nutritionix.headers}
+        )
+      .then(response => {
+        //console.log(response.data.foods);
+        let foodList = response.data.foods;
+        let totalCalories = 0;
+        for (let i = 0; i < foodList.length; i++) {
+          totalCalories += foodList[i].nf_calories;
+        }
+        mealObj.kcal = totalCalories;
+
+        //save to db
+        let newMeal = new Meal(mealObj);
+        newMeal.save(function(err, savedMeal) {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            return res.status(200).json({message: "Record created", meal: savedMeal});
+          }
+        });
+
+      })
+      .catch(err => {
+        let nutritionixError = err.response.data.message;
+        mealObj.kcal = 0;
+
+        //save to db
+        let newMeal = new Meal(mealObj);
+        newMeal.save(function(err, savedMeal) {
+          if (err) {
+            return res.status(500).json({message: "Database error"});
+          } else {
+            return res.status(200).json({message: "Record created. But we couldn't match any of your foods", meal: savedMeal});
+          }
+        });
+        
+      });
+
     }
-
-    //save to db
-    let newMeal = new Meal(mealObj);
-    newMeal.save(function(err, savedMeal) {
-      if (err) {
-        return res.status(500).json({message: "Database error"});
-      } else {
-        return res.status(200).json({message: "Meal created", meal: savedMeal});
-      }
-    });
-
   },
 
   updateOne: function(req, res) {

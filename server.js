@@ -8,7 +8,7 @@ var config = require("./config");
 //mongoose and mongodb
 var mongoose = require("mongoose");
 mongoose.Promise = require('bluebird');
-mongoose.connect(config.databaseUrl, {useMongoClient: true});
+mongoose.connect(config.mongodb.devUrl, {useMongoClient: true});
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 

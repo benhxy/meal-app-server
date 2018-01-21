@@ -54,7 +54,9 @@ module.exports = {
             let consolidated = {
               role: user.role,
               profilePic: user.profilePic,
-              expectedKcal: user.expectedKcal
+              expectedKcal: user.expectedKcal,
+              verified: user.local.verified,
+              loginFailCount: user.local.loginFailCount
             };
             console.log(user.facebook.id == undefined);
             if (user.facebook.id != undefined) {

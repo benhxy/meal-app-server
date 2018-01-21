@@ -26,9 +26,6 @@ var verifyJwt = function (req, res, next) {
     }
   });
 
-  console.log(req.decoded);
-  console.log("Verify successful");
-
   //check if user is verified or unlocked, redirect if not
   let dbQuery = User.findById(req.decoded.userId);
   let redirect = dbQuery.exec(function(err, user) {
