@@ -8,7 +8,7 @@ var updateProfilePic = {
 		console.log("=====profile upload=====");
 
 		//check user ID exists
-		if (!req.body.userId || req.body.userId == "") {
+		if (!req.query.userId || req.query.userId == "") {
 			return res.status(400).json({message: "Missing user ID"});
 		}
 		
@@ -17,15 +17,15 @@ var updateProfilePic = {
 			return res.status(400).json({message: "Illegal file extention. Only jpg, jpeg, png, gif are allowed."});
 		}
 
-
 		//find user
-		User.findById(req.body.userId, function(err, user) {
+		User.findById(req.query.userId, function(err, user) {
 			if (err) {
 				console.log(err);
 				return res.status(400).json({message: "Invalid user ID"});
 			} else {
 				//store into mongodb user object
 				user.profilePic.data = fs.readFileSync(req.file.path);
+				console.log(user.profilePic.data)
 				user.profilePic.contentType = "image/png";
 				user.save(function(err, savedUser) {
 					if (err) {

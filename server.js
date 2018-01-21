@@ -10,18 +10,15 @@ var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 //middlewares
-var multer = require("multer");
-var path = require('path');
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
+var path = require('path');
 
 //temp routes for dev
-//app.get("/api/test/resetPassword", require("./testing/resetPasswordTest"));
-var upload = multer({dest: path.resolve(__dirname, "../upload")});
-app.post("/api/test/fileUpload", upload.single("profile"), require("./testing/fileUploadTest"));
+
 
 //unprotected public routes
 var authRoutes = require("./routes/authRoutes");
