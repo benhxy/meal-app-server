@@ -3,7 +3,7 @@ var router = express.Router();
 var userControllers = require("../controllers/userControllers");
 
 //verify token
-var verifyJwt = require("../middlewares/verifyJwt");
+var verifyJwt = require("../utilities/verifyJwt");
 router.use(verifyJwt);
 
 //routes

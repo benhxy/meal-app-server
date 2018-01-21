@@ -1,8 +1,5 @@
-//express
 var express = require("express");
 var app = express();
-
-//config
 var config = require("./config");
 
 //mongoose and mongodb
@@ -13,6 +10,7 @@ var db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 //middlewares
+var multer = require("multer");
 var path = require('path');
 var morgan = require('morgan');
 var bodyParser = require('body-parser');
@@ -22,7 +20,8 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 //temp routes for dev
 //app.get("/api/test/resetPassword", require("./testing/resetPasswordTest"));
-
+var upload = multer({dest: path.resolve(__dirname, "../upload")});
+app.post("/api/test/fileUpload", upload.single("profile"), require("./testing/fileUploadTest"));
 
 //unprotected public routes
 var authRoutes = require("./routes/authRoutes");
@@ -32,16 +31,14 @@ app.use("/api/auth/", authRoutes);
 //protected routes
 var userRoutes = require("./routes/userRoutes");
 var mealRoutes = require("./routes/mealRoutes");
+var utilRoutes = require("./routes/utilRoutes");
 app.use("/api/users/", userRoutes);
 app.use("/api/meals/", mealRoutes);
+app.use("/api/utils/", utilRoutes);
 
 
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+//serve static front-end pages
+app.get("*", (req,res)=>{res.sendFile(path.resolve(__dirname, '../meal-app-client', 'build', 'index.html'));
 });
 
 // error handler
@@ -60,7 +57,8 @@ var server = http.createServer(app);
 server.listen(config.serverPort);
 server.on('error', (error) => {
   if (error.syscall !== 'listen') {
-    throw error;
+    console.log(err)
+    //throw error;
   }
 
   var bind = typeof port === 'string'
@@ -78,7 +76,8 @@ server.on('error', (error) => {
       process.exit(1);
       break;
     default:
-      throw error;
+      console.log(err);
+      //throw error;
   }
 });
 server.on('listening', () =>  {

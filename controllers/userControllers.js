@@ -7,9 +7,9 @@ var config = require("../config");
 //models
 var User = require("../models/userModel");
 //middlewares
-var sendInvitation = require("../middlewares/sendInvitation");
-var sendVerification = require("../middlewares/sendVerification");
-var compressUser = require("../middlewares/compressUser");
+var sendInvitation = require("../utilities/sendInvitation");
+var sendVerification = require("../utilities/sendVerification");
+var compressUser = require("../utilities/compressUser");
 
 module.exports = {
 

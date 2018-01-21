@@ -37,8 +37,7 @@ var UserSchema = new Schema({
   },
   profilePic: {
     data: Buffer,
-    contentType: String,
-    default: ""
+    contentType: String
   },
   expectedKcal: {
     type: Number,

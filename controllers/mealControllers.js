@@ -4,7 +4,7 @@ var Meal = require("../models/mealModel");
 var ObjectId = require("mongoose").Types.ObjectId;
 
 var config = require("../config");
-var verify = require("../middlewares/sendVerification");
+var verify = require("../utilities/sendVerification");
 
 module.exports = {
 

@@ -12,6 +12,7 @@
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
+    "fs": "0.0.1-security",
     "jsonwebtoken": "^8.1.0",
     "moment": "^2.20.1",
     "mongoose": "^4.13.9",
@@ -21,6 +22,7 @@
     "nodemon": "^1.14.11",
     "path": "^0.12.7",
     "randomstring": "^1.1.5",
+    "request": "^2.83.0",
     "validator": "^9.2.0"
   },
   "devDependencies": {

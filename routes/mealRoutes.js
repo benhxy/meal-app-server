@@ -3,7 +3,7 @@ var router = express.Router();
 var mealControllers = require("../controllers/mealControllers");
 
 //verify token
-var verifyJwt = require("../middlewares/verifyJwt");
+var verifyJwt = require("../utilities/verifyJwt");
 router.use(verifyJwt);
 
 //routes
