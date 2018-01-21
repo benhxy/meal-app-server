@@ -24,7 +24,6 @@ module.exports = {
       Meal
         .find({"user": new ObjectId(req.query.userId)
         })
-        .populate("user")
         .exec(function(err, mealArray) {
           if (mealArray != null) {
             return res.status(200).json({meals: mealArray});
@@ -132,8 +131,7 @@ module.exports = {
       }
 
       //save to db
-      let newMeal = new Meal(mealObj);
-    newMeal.save(function(err, updatedMeal) {
+      meal.save(function(err, updatedMeal) {
       if (err) {
         return res.status(500).json({message: "Database error"});
       } else {
@@ -147,10 +145,14 @@ module.exports = {
 
   deleteOne: function(req, res) {
 
+    console.log("=====delete meal=====");
+
     //check meal
     if (!req.query.mealId) {
       return res.status(400).json({message: "Missing record ID"});
     }
+
+    console.log(req.query.mealId);
 
     Meal.findById(req.query.mealId, function(err, meal) {
 

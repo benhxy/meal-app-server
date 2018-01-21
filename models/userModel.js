@@ -9,7 +9,6 @@ var UserSchema = new Schema({
     password: String,
     verified: Boolean,
     verificationNonce: String,
-    verificationLastSent: Date,
     loginFailCount: Number,
   },
   facebook         : {

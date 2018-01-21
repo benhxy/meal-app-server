@@ -36,15 +36,13 @@ var verifyJwt = function (req, res, next) {
       return res.status(500).json({message: "Database error", error: err});
     }
     if (!user.local.verified) {
-      return res.status(300).json({
-        message: "Redirect to resend verification page",
-        redirect: "/auth/resend-verification"
+      return res.status(400).json({
+        message: "Your email is not verified yet"
       });
     }
     if (user.local.loginFailCount && user.local.loginFailCount >= 3) {
-      return res.status(300).json({
-        message: "Redirect to account locked page",
-        redirect: "/auth/account-locked"
+      return res.status(400).json({
+        message: "Your account is locked. Please contact admin to unlock."
       });
     }
 

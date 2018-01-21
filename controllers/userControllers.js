@@ -9,6 +9,7 @@ var User = require("../models/userModel");
 //middlewares
 var sendInvitation = require("../middlewares/sendInvitation");
 var sendVerification = require("../middlewares/sendVerification");
+var compressUser = require("../middlewares/compressUser");
 
 module.exports = {
 

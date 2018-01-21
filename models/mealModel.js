@@ -4,7 +4,7 @@ mongoose.Promise = require('bluebird');
 var Schema = mongoose.Schema;
 
 var MealSchema = new Schema({
-  date: {type: Date, default: Date.now},
+  date: Date,
   time: String,
   food: String,
   kcal: Number,

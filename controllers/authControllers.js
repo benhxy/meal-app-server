@@ -34,15 +34,19 @@ module.exports = {
         return res.status(400).json({message: "This email is already in use"});
       } else {
         //construct new user object
+        //hash password
+        //generate verification nonce
         let newUserInfo = {
           local: {
             name: req.body.name,
             email: req.body.email,
             password: bcrypt.hashSync(req.body.password, 10),
             verified: false,
-            loginFailCount: 0
+            loginFailCount: 0,
+            verificationNonce: randomstring.generate(20)
           },
-          role: "user"
+          role: "user",
+          expectedKcal: 0
         };
 
         //save to db
@@ -132,7 +136,7 @@ module.exports = {
 
     //check user db and nonce
     User.findById(req.query.userId, function(err, user) {
-      if (user == null || use == undefined || user.local.verificationNonce != req.query.nonce) {
+      if (user == null || use == undefined || user.local.verificationNonce == null || user.local.verificationNonce != req.query.nonce) {
         return res.status(400).send("Invalid activation link");
       } else {
         //console.log(user);
@@ -155,7 +159,7 @@ module.exports = {
 
     console.log("=====facebook login=====");
 
-/* Implement in the future
+/* Implement token inspection in the future
     //get app access token
     if (config.facebookAppAccessToken == "") {
       let fbTokenLink = "https://graph.facebook.com/oauth/access_token?client_id=" + config.facebookAppId + "&client_secret=" + config.facebookAppSecret + "&grant_type=client_credentials";
