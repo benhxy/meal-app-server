@@ -117,7 +117,8 @@ module.exports = {
       redirect: "/meals",
       token: token,
       role: userObj.role,
-      userId: userObj._id
+      userId: userObj._id,
+      expectedKcal: userObj.expectedKcal
     });
 
   },

@@ -15,11 +15,12 @@ module.exports = {
 
   readOneOrMany: function(req, res) {
 
-    console.log("=====read user controller=====");
+    
 
     if (req.query.userId) {
 
       //read one
+      console.log("=====read one user=====");
       //check permission if not reading self
       if (req.query.userId != req.decoded.userId && (!req.decoded.permissions || req.decoded.permissions.indexOf("users") == -1)) {
         return res.status(403).json({message: "No permission to other users"});
@@ -37,28 +38,28 @@ module.exports = {
     } else {
 
       //read many
+      console.log("=====read all users=====");
       //check permission
       if (!req.decoded.permissions || req.decoded.permissions.indexOf("users") == -1) {
         return res.status(403).json({message: "No permission to other users"});
       }
 
       //query db (without pulling profile pics)
-      User.find({})
-      .select("local facebook google role expectedKcal")
-      .exec(function(err, userResult) {
-        if (err) {
+      User.find({}, function(err, userResult) {
+        if (err != null) {
           return res.status(500).json({message: "Database error", error: err});
         } else {
           //remove unused login account
-          let userArray = userResult.map(function(user) {
+          let userArray = [];
+          userResult.forEach(function(user) {
             let consolidated = {
+              _id: user._id,
               role: user.role,
               profilePic: user.profilePic,
               expectedKcal: user.expectedKcal,
               verified: user.local.verified,
               loginFailCount: user.local.loginFailCount
             };
-            console.log(user.facebook.id == undefined);
             if (user.facebook.id != undefined) {
               consolidated.name = user.facebook.name;
               consolidated.email = user.facebook.email;
@@ -72,7 +73,7 @@ module.exports = {
               consolidated.email = user.local.email;
               consolidated.accountType = "Local";
             }
-            return consolidated;
+            userArray.push(consolidated);
           });
           return res.status(200).json({users: userArray});
         }
