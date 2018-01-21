@@ -7,9 +7,15 @@ var UserSchema = new Schema({
     name: String,
     email: String,
     password: String,
-    verified: Boolean,
+    verified: {
+      type: Boolean,
+      default: false
+    },
     verificationNonce: String,
-    loginFailCount: Number,
+    loginFailCount: {
+      type: Number,
+      default: 0
+    },
   },
   facebook         : {
     id: String,
@@ -26,15 +32,17 @@ var UserSchema = new Schema({
   role: {
     type: String,
     required: true,
-    enum: ["user", "userManager", "admin"]
+    enum: ["user", "userManager", "admin"],
+    default: "user"
   },
   profilePic: {
     data: Buffer,
-    contentType: String
+    contentType: String,
+    default: ""
   },
   expectedKcal: {
     type: Number,
-    default: 0
+    default: 2000
   }
 });
 

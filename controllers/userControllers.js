@@ -15,8 +15,6 @@ module.exports = {
 
   readOneOrMany: function(req, res) {
 
-    
-
     if (req.query.userId) {
 
       //read one
@@ -161,10 +159,8 @@ module.exports = {
             name: req.body.name,
             email: req.body.email,
             password: bcrypt.hashSync(tempPassword, 10),
-            verified: false,
-            verificationNonce: randomstring.generate(20)
-          },
-          role: "user"
+            verificationNonce: randomstring.generate(20),
+          }
         }
 
         //save to db
@@ -202,9 +198,7 @@ module.exports = {
           user.set({"local.name": req.body.name});
         }
         if (req.body.password) {
-          bcrypt.hash(req.body.password, 10).then((hash) => {
-            user.set({"local.password": hash});
-          });
+          user.set({"local.password": bcrypt.hashSync(req.body.password, 10)});
         }
         if (req.body.expectedKcal) {
           user.set({"expectedKcal": req.body.expectedKcal});

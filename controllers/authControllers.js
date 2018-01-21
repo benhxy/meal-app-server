@@ -41,12 +41,8 @@ module.exports = {
             name: req.body.name,
             email: req.body.email,
             password: bcrypt.hashSync(req.body.password, 10),
-            verified: false,
-            loginFailCount: 0,
             verificationNonce: randomstring.generate(20)
-          },
-          role: "user",
-          expectedKcal: 0
+          }
         };
 
         //save to db
@@ -80,47 +76,50 @@ module.exports = {
     }
 
     //search by email
-    let userObj = await User.findOne({"local.email": req.body.email}, function(err, user) {
-      if (user == null || user == undefined) {
+    let userObj = await User.findOne({"local.email": req.body.email}, function(err, userObj) {
+      if (userObj == null) {
         return res.status(400).json({message: "Local login email does not exist"});
+      } else {
+
+            //check if locked
+        if (userObj.local.loginFailCount && userObj.local.loginFailCount >= 3) {
+          return res.status(400).json({message: "Your account is locked"});
+        }
+
+        //check if verified
+        if (!userObj.local.verified) {
+          return res.status(400).json({message: "Your email is not yet verified"});
+        }
+
+        //check password, if incorrect, increment count
+        console.log(req.body.password)
+
+        let passwordIsCorrect = bcrypt.compareSync(req.body.password, userObj.local.password);
+        if (!passwordIsCorrect) {
+          userObj.local.loginFailCount = userObj.local.loginFailCount + 1;
+          userObj.save();
+          return res.status(400).json({message: "Wrong password"});
+        }
+
+        //generate token
+        let payload = {
+          "userId": userObj._id,
+          "role": userObj.role
+        };
+        let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
+
+        //successful login, redirect to meals page
+        return res.json({
+          message: "Login successdul, redirect to meals page",
+          redirect: "/meals",
+          token: token,
+          role: userObj.role,
+          userId: userObj._id,
+          expectedKcal: userObj.expectedKcal
+        });
+
       }
     });
-
-    //check if locked
-    if (userObj.local.loginFailCount && userObj.local.loginFailCount >= 3) {
-      return res.status(400).json({message: "Your account is locked"});
-    }
-
-    //check if verified
-    if (!userObj.local.verified) {
-      return res.status(400).json({message: "Your email is not yet verified"});
-    }
-
-    //check password, if incorrect, increment count
-    let passwordIsCorrect = bcrypt.compareSync(req.body.password, userObj.local.password);
-    if (!passwordIsCorrect) {
-      userObj.local.loginFailCount = userObj.local.loginFailCount + 1;
-      userObj.save();
-      return res.status(400).json({message: "Wrong password"});
-    }
-
-    //generate token
-    let payload = {
-      "userId": userObj._id,
-      "role": userObj.role
-    };
-    let token = jwt.sign(payload, config.jwtSecret, {expiresIn: config.jwtTtl});
-
-    //successful login, redirect to meals page
-    return res.json({
-      message: "Login successdul, redirect to meals page",
-      redirect: "/meals",
-      token: token,
-      role: userObj.role,
-      userId: userObj._id,
-      expectedKcal: userObj.expectedKcal
-    });
-
   },
 
   //activate local account

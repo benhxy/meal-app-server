@@ -20,10 +20,8 @@ app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
-//temp
-app.get("/api/test/", (req, res) => {
-  return res.redirect("http://localhost:3000/test/google-login");
-});
+//temp routes for dev
+//app.get("/api/test/resetPassword", require("./testing/resetPasswordTest"));
 
 
 //unprotected public routes
