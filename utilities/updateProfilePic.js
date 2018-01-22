@@ -25,8 +25,8 @@ var updateProfilePic = {
 			} else {
 				//store into mongodb user object
 				user.profilePic.data = fs.readFileSync(req.file.path);
-				console.log(user.profilePic.data)
-				user.profilePic.contentType = "image/png";
+				//console.log(user.profilePic.data)
+				user.profilePic.contentType = "image";
 				user.save(function(err, savedUser) {
 					if (err) {
 						console.log(err);

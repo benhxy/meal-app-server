@@ -28,10 +28,10 @@ app.use("/api/auth/", authRoutes);
 //protected routes
 var userRoutes = require("./routes/userRoutes");
 var mealRoutes = require("./routes/mealRoutes");
-var utilRoutes = require("./routes/utilRoutes");
+var imageRoutes = require("./routes/imageRoutes");
 app.use("/api/users/", userRoutes);
 app.use("/api/meals/", mealRoutes);
-app.use("/api/utils/", utilRoutes);
+app.use("/api/images/", imageRoutes);
 
 
 //serve static front-end pages
