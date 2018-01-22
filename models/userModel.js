@@ -22,12 +22,14 @@ var UserSchema = new Schema({
     token: String,
     email: String,
     name: String,
+    profilePicUrl: String,
   },
   google           : {
     id: String,
     token: String,
     email: String,
     name: String,
+    profilePicUrl: String,
   },
   role: {
     type: String,

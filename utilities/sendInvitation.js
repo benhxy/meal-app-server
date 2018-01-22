@@ -3,25 +3,20 @@ var randomstring = require("randomstring");
 
 var config = require("../config");
 
-var sendInvitation = function(user, tempPassword) {
+var sendInvitation = function(email) {
 
-  console.log("=====send verfication=====");
-  console.log(user);
-
-  let userId = user._id;
-  let email = user.local.email;
-  let nonce = user.local.verificationNonce;
+  console.log("=====send invitation=====");
 
   //setup mailer
   let transporter = nodemailer.createTransport(config.mailer);
 
   //set email content
-  let emailText = "Click this to activate your account: http://localhost:" + config.port + "/api/public/activate-account?userId=" + userId + "&nonce=" + nonce + "\nYour temporary password is: " + tenpPassword;
+  let emailText = "Come and register! http://localhost:" + config.clientPort + "/auth/signup";
 
   let mailOptions = {
     from: 'benhu.seattle@gmail.com',
     to: email,
-    subject: 'Invitation email',
+    subject: 'Invitation',
     text: emailText
   };
 

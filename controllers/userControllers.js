@@ -178,7 +178,35 @@ module.exports = {
 
   },
 
+  sendInvitation: function(req, res) {
+    console.log("=====send invitation=====");
+    //check permission
+    if (!req.decoded.permissions || req.decoded.permissions.indexOf("invitation") == -1) {
+      return res.status(403).json({message: "No permission to invite users"});
+    }
+    //check email address
+    if (!req.body.email || req.body.email == "" || !validator.isEmail(req.body.email)) {
+      return res.status(400).json({message: "Invalid email"});
+    }
+    //check if email exists in database
+    User.findOne({$or: [
+      {"local.email": req.body.email},
+      {"facebook.email": req.body.email},
+      {"google.email": req.body.email}
+    ]}, function(err, user) {
+      if (user != null || user != undefined) {
+        return res.status(400).json({message: "This email is already in use"});
+      } else {
+        //send
+        sendInvitation(req.body.email);
+        return res.json({message: "Invitation sent!"});
+      }
+    });
+  },
+
   updateOne: function(req, res) {
+
+    console.log("=====update user=====");
     //update user by self or admin
     //database hit: 2
 

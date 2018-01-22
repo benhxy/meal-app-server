@@ -15,7 +15,7 @@ var sendVerification = function(user) {
   let transporter = nodemailer.createTransport(config.mailer);
 
   //set email content
-  let emailText = "Click this to activate your account: http://localhost:" + config.port + "/api/public/activate-account?userId=" + userId + "&nonce=" + nonce;
+  let emailText = "Click this to activate your account: http://localhost:" + config.clientPort + "/activate?userId=" + userId + "&nonce=" + nonce;
   let mailOptions = {
     from: 'benhu.seattle@gmail.com',
     to: email,

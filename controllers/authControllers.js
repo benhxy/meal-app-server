@@ -129,25 +129,25 @@ module.exports = {
     //console.log(req.query);
 
     //check query completeness
-    if (!req.query.userId || !req.query.nonce) {
+    if (!req.body.userId || !req.body.nonce) {
       console.log("query incomplete");
       return res.status(400).send("Invalid activation link");
     }
 
     //check user db and nonce
-    User.findById(req.query.userId, function(err, user) {
-      if (user == null || use == undefined || user.local.verificationNonce == null || user.local.verificationNonce != req.query.nonce) {
-        return res.status(400).send("Invalid activation link");
+    User.findById(req.body.userId, function(err, user) {
+      if (user == undefined || user.local.verificationNonce == null || user.local.verificationNonce != req.body.nonce) {
+        return res.status(400).json({message : "Invalid activation link"});
       } else {
         //console.log(user);
         user.local.verified = true;
         user.local.verificationNonce = null;
         user.save(function(err, updatedUser) {
           if (err) {
-            return res.status(500).send("Database error");
+            return res.status(500).json({message: "Database error"});
           } else {
             //redirect to frontend login page
-            return res.redirect("http://localhost:"+ config.clientPort + "/auth/login");
+            return res.json("Account activated");
           }
         });
       }

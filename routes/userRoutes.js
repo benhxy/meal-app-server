@@ -10,10 +10,9 @@ router.use(verifyJwt);
 router.get("/", userControllers.readOneOrMany);
 
 router.post("/", userControllers.createOneLocalAccount);
-router.post("/send-invitation", userControllers.createOneLocalAccountAndInvite);
-
+//router.post("/send-invitation", userControllers.createOneLocalAccountAndInvite);
+router.post("/invite", userControllers.sendInvitation);
 router.put("/", userControllers.updateOne);
-
 router.delete("/", userControllers.deleteOne);
 
 module.exports = router;

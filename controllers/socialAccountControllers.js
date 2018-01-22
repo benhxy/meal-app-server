@@ -1,5 +1,6 @@
 var jwt = require("jsonwebtoken");
 var axios = require("axios");
+var request = require("request");
 
 var User = require("../models/userModel");
 var config = require("../config");
@@ -49,7 +50,8 @@ module.exports = {
             id: req.body.id,
             token: req.body.accessToken,
             email: req.body.email,
-            name: req.body.name
+            name: req.body.name,
+            profilePicUrl: req.body.profilePicUrl
           },
           role: "user"
         };
@@ -140,7 +142,8 @@ module.exports = {
             id: req.body.id,
             token: req.body.accessToken,
             email: req.body.email,
-            name: req.body.name
+            name: req.body.name,
+            profilePicUrl: req.body.profilePicUrl
           },
           role: "user"
         };

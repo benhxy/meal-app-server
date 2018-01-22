@@ -5,7 +5,7 @@ var socialAccountControllers = require("../controllers/socialAccountControllers"
 
 router.post("/signup/", authControllers.localSignup);
 router.post("/login/", authControllers.localLogin);
-router.get("/activate-account", authControllers.activateAccount);
+router.post("/activate", authControllers.activateAccount);
 
 router.post("/facebook-login", socialAccountControllers.facebookLogin);
 router.post("/google-login", socialAccountControllers.googleLogin);
