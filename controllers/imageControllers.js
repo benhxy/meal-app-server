@@ -1,6 +1,7 @@
+var fs = require("fs");
+var ObjectId = require("mongoose").Types.ObjectId;
 var User = require("../models/userModel");
 var Image = require("../models/imageModel");
-var fs = require("fs");
 
 var imageControllers = {
 
@@ -51,9 +52,19 @@ var imageControllers = {
 						console.log(err);
 						return res.status(500).json({message: "Database error"});
 					} else {
-						return res.json({
-							message: "Profile picture uploaded", 
-							image: savedImage._id
+						//update user image id
+						user.profilePic = savedImage._id;
+						console.log(user);
+						user.save(function(err, updatedUser) {
+							if (err) {
+								console.log(err);
+								return res.status(500).json({message: "Database error"});
+							} else {
+								return res.json({
+									message: "Profile picture uploaded", 
+									image: updatedUser.profilePic
+								});
+							}
 						});
 					}
 				});

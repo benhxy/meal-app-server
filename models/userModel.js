@@ -35,7 +35,7 @@ var UserSchema = new Schema({
     enum: ["user", "userManager", "admin"],
     default: "user"
   },
-  user: {
+  profilePic: {
     type: Schema.Types.ObjectId, 
     ref:"Image"},
   expectedKcal: {
